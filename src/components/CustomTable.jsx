@@ -2,16 +2,19 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { useTable } from 'react-table';
 import axios from 'axios';
 
-const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn}) => {
+const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn }) => {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const result = await axios(apiLink);
         setData(result.data);
+        setLoading(false);
       } catch (error) {
         console.error('API Error:', error);
+        setLoading(false);
       }
     };
 
@@ -40,8 +43,12 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
     prepareRow,
   } = useTable({ columns, data });
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div style={{ display: centered ? 'flex' : 'block', justifyContent: 'center', width: divWidth, position: divPosition , gridRow, gridColumn}}>
+    <div style={{ display: centered ? 'flex' : 'block', justifyContent: 'center', width: divWidth, position: divPosition, gridRow, gridColumn }}>
       <div style={{ maxHeight: divHeight, overflowY: 'auto' }}>
         <table {...getTableProps()} style={{ border: 'solid 1px black' }}>
           <thead>

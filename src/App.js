@@ -11,7 +11,7 @@ function App() {
         fontColors={['black', 'white', 'black', 'white']} //column içi font rengi
         textAlign={['center', 'center', 'left', 'center']} //column içi text hizalama
         padding={['15px', '15px', '5px', '25px']} //column içi padding
-        centered={true} //datagrid ortalanacak mı? - istediğim gibi çalışmıyor şu an
+        //centered={true} //datagrid ortalanacak mı? - istediğim gibi çalışmıyor şu an
         divHeight={'600px'} //datagrid yüksekliği
         divWidth={'700px'} //datagrid genişliği
         divPosition={'relative'} //datagrid position

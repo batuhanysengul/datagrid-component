@@ -1,8 +1,29 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { useTable } from 'react-table';
+import { useTable, usePagination, useGlobalFilter } from 'react-table';
 import axios from 'axios';
 
-const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn }) => {
+function GlobalFilter({
+  preGlobalFilteredRows,
+  globalFilter,
+  setGlobalFilter,
+}) {
+  const count = preGlobalFilteredRows.length;
+
+  return (
+    <span>
+      Ara:{' '}
+      <input
+        value={globalFilter || ''}
+        onChange={e => {
+          setGlobalFilter(e.target.value || undefined); 
+        }}
+        placeholder={`${count} satır bulunmaktadır.`}
+      />
+    </span>
+  );
+}
+
+const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn, columnNames }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +44,7 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
 
   const columns = useMemo(() => {
     return Object.keys(data[0] || {}).map((key, index) => ({
-      Header: key,
+      Header: columnNames[index] || key,
       accessor: key,
       style: {
         width: columnWidths[index],
@@ -33,15 +54,33 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
         padding: padding[index],
       },
     }));
-  }, [data, columnWidths, columnColors, fontColors, textAlign, padding]);
+  }, [data, columnWidths, columnColors, fontColors, textAlign, padding, columnNames]);
 
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    page,
     prepareRow,
-  } = useTable({ columns, data });
+    preGlobalFilteredRows,
+    setGlobalFilter,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    state: { pageIndex, globalFilter },
+  } = useTable(
+    {
+      columns,
+      data,
+      initialState: { pageIndex: 0 },
+    },
+    useGlobalFilter, 
+    usePagination
+  );
 
   if (loading) {
     return <div>Loading...</div>;
@@ -50,6 +89,11 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
   return (
     <div style={{ display: centered ? 'flex' : 'block', justifyContent: 'center', width: divWidth, position: divPosition, gridRow, gridColumn }}>
       <div style={{ maxHeight: divHeight, overflowY: 'auto' }}>
+        <GlobalFilter
+          preGlobalFilteredRows={preGlobalFilteredRows}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+        />
         <table {...getTableProps()} style={{ border: 'solid 1px black' }}>
           <thead>
             {headerGroups.map(headerGroup => (
@@ -63,7 +107,7 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
             ))}
           </thead>
           <tbody {...getTableBodyProps()}>
-            {rows.map(row => {
+            {page.map(row => {
               prepareRow(row);
               return (
                 <tr {...row.getRowProps()}>
@@ -77,6 +121,38 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
             })}
           </tbody>
         </table>
+        <div>
+          <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+            {'<<'}
+          </button>{' '}
+          <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+            {'<'}
+          </button>{' '}
+          <button onClick={() => nextPage()} disabled={!canNextPage}>
+            {'>'}
+          </button>{' '}
+          <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+            {'>>'}
+          </button>{' '}
+          <span>
+            Sayfa{' '}
+            <strong>
+              {pageIndex + 1} / {pageOptions.length}
+            </strong>{' '}
+          </span>
+          <span>
+            | Sayfaya git:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0;
+                gotoPage(page);
+              }}
+              style={{ width: '100px' }}
+            />
+          </span>{' '}
+        </div>
       </div>
     </div>
   );

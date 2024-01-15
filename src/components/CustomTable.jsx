@@ -23,7 +23,7 @@ function GlobalFilter({
   );
 }
 
-const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn, columnNames }) => {
+const CustomTable = ({ apiLink, columnWidths, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn, columnNames }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,13 +48,11 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
       accessor: key,
       style: {
         width: columnWidths[index],
-        backgroundColor: columnColors[index],
-        color: fontColors[index],
         textAlign: textAlign[index],
         padding: padding[index],
       },
     }));
-  }, [data, columnWidths, columnColors, fontColors, textAlign, padding, columnNames]);
+  }, [data, columnWidths, textAlign, padding, columnNames]);
 
   const {
     getTableProps,
@@ -95,31 +93,31 @@ const CustomTable = ({ apiLink, columnWidths, columnColors, fontColors, textAlig
           setGlobalFilter={setGlobalFilter}
         />
         <table {...getTableProps()} style={{ border: 'solid 1px black' }}>
-          <thead>
-            {headerGroups.map(headerGroup => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()} style={column.style}>
-                    {column.render('Header')}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody {...getTableBodyProps()}>
-            {page.map(row => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => (
-                    <td {...cell.getCellProps()} style={cell.column.style}>
-                      {cell.render('Cell')}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
+        <thead>
+  {headerGroups.map(headerGroup => (
+    <tr {...headerGroup.getHeaderGroupProps()}>
+      {headerGroup.headers.map(column => (
+        <th {...column.getHeaderProps()}>
+          {column.render('Header')}
+        </th>
+      ))}
+    </tr>
+  ))}
+</thead>
+<tbody {...getTableBodyProps()}>
+  {page.map((row, i) => {
+    prepareRow(row);
+    return (
+      <tr {...row.getRowProps()} style={{ backgroundColor: i % 2 === 0 ? 'lightgrey' : 'white'}}>
+        {row.cells.map(cell => (
+          <td {...cell.getCellProps()}  style={{ borderBottom: '2px solid black'}}>
+            {cell.render('Cell')}
+          </td>
+        ))}
+      </tr>
+    );
+  })}
+</tbody>
         </table>
         <div>
           <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>

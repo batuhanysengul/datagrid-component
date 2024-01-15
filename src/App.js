@@ -9,8 +9,6 @@ function App() {
         apiLink="https://jsonplaceholder.typicode.com/posts"
         columnWidths={['50px', '50px', '300px', '600px']}
         columnNames={['USERID', 'ID', 'TITLE', 'BODY']}
-        columnColors={[' #581845', 'grey', 'white', '#ff7b5f']}
-        fontColors={['black', 'white', 'black', 'white']}
         textAlign={['center', 'center', 'left', 'center']}
         padding={['15px', '15px', '5px', '25px']}
         divHeight={'600px'}

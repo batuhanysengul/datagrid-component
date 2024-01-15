@@ -1,6 +1,8 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import { useTable, usePagination, useGlobalFilter } from 'react-table';
-import axios from 'axios';
+import React, { useMemo, useEffect, useState } from "react";
+import { useTable, usePagination, useGlobalFilter } from "react-table";
+import axios from "axios";
+//çok önemli değil gerçek projede kullanılır mı bilmiyorum
+import BeatLoader from "react-spinners/BeatLoader";
 
 function GlobalFilter({
   preGlobalFilteredRows,
@@ -11,11 +13,11 @@ function GlobalFilter({
 
   return (
     <span>
-      Ara:{' '}
+      Ara:{" "}
       <input
-        value={globalFilter || ''}
-        onChange={e => {
-          setGlobalFilter(e.target.value || undefined); 
+        value={globalFilter || ""}
+        onChange={(e) => {
+          setGlobalFilter(e.target.value || undefined);
         }}
         placeholder={`${count} satır bulunmaktadır.`}
       />
@@ -23,9 +25,35 @@ function GlobalFilter({
   );
 }
 
-const CustomTable = ({ apiLink, columnWidths, textAlign, padding, centered, divHeight, divWidth, divPosition, gridRow, gridColumn, columnNames }) => {
+function MobileRow({ row, columnNames }) {
+  return (
+    <div className="mobile-row">
+      {row.cells.map((cell, i) => (
+        <div key={i}>
+          <strong>{columnNames[i]}: </strong>
+          {cell.render("Cell")}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const CustomTable = ({
+  apiLink,
+  columnWidths,
+  textAlign,
+  padding,
+  centered,
+  divHeight,
+  divWidth,
+  divPosition,
+  gridRow,
+  gridColumn,
+  columnNames
+}) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,9 +62,13 @@ const CustomTable = ({ apiLink, columnWidths, textAlign, padding, centered, divH
         setData(result.data);
         setLoading(false);
       } catch (error) {
-        console.error('API Error:', error);
+        console.error("API Error:", error);
         setLoading(false);
       }
+
+      const handleResize = () => setIsMobile(window.innerWidth <= 600);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     };
 
     fetchData();
@@ -54,12 +86,16 @@ const CustomTable = ({ apiLink, columnWidths, textAlign, padding, centered, divH
     }));
   }, [data, columnWidths, textAlign, padding, columnNames]);
 
+  
+function getCellStyle(index) {
+  return {
+    width: `${columnWidths[index]}px`,
+    textAlign: textAlign[index],
+    padding: padding[index],
+  };
+}
+
   const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
     preGlobalFilteredRows,
     setGlobalFilter,
     canPreviousPage,
@@ -69,87 +105,138 @@ const CustomTable = ({ apiLink, columnWidths, textAlign, padding, centered, divH
     gotoPage,
     nextPage,
     previousPage,
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    page,
+    prepareRow,
     state: { pageIndex, globalFilter },
   } = useTable(
     {
-      columns,
+      columns: columns,
       data,
       initialState: { pageIndex: 0 },
     },
-    useGlobalFilter, 
+    useGlobalFilter,
     usePagination
   );
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100vw",
+        }}
+      >
+        <div>
+          <BeatLoader color="#4A90E2" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ display: centered ? 'flex' : 'block', justifyContent: 'center', width: divWidth, position: divPosition, gridRow, gridColumn }}>
-      <div style={{ maxHeight: divHeight, overflowY: 'auto' }}>
+    <div
+      style={{
+        display: centered ? "flex" : "block",
+        justifyContent: "center",
+        width: divWidth,
+        position: divPosition,
+        gridRow,
+        gridColumn,
+      }}
+    >
+      <div style={{ maxHeight: divHeight, overflowY: "auto" }}>
         <GlobalFilter
           preGlobalFilteredRows={preGlobalFilteredRows}
           globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
         />
-        <table {...getTableProps()} style={{ border: 'solid 1px black' }}>
-        <thead>
-  {headerGroups.map(headerGroup => (
-    <tr {...headerGroup.getHeaderGroupProps()}>
-      {headerGroup.headers.map(column => (
-        <th {...column.getHeaderProps()}>
-          {column.render('Header')}
-        </th>
-      ))}
-    </tr>
-  ))}
-</thead>
-<tbody {...getTableBodyProps()}>
-  {page.map((row, i) => {
-    prepareRow(row);
-    return (
-      <tr {...row.getRowProps()} style={{ backgroundColor: i % 2 === 0 ? 'lightgrey' : 'white'}}>
-        {row.cells.map(cell => (
-          <td {...cell.getCellProps()}  style={{ borderBottom: '2px solid black'}}>
-            {cell.render('Cell')}
-          </td>
-        ))}
-      </tr>
-    );
-  })}
-</tbody>
+        <table className="resp-table" {...getTableProps()}>
+          <thead>
+            {headerGroups.map((headerGroup) => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column) => (
+                  <th {...column.getHeaderProps()}>
+                    {column.render("Header")}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {isMobile
+              ? page.map((row, i) => {
+                  prepareRow(row);
+                  return (
+                    <MobileRow key={i} row={row} columnNames={columnNames} />
+                  );
+                })
+              : page.map((row, i) => {
+                prepareRow(row);
+                return (
+                  <tr
+                    {...row.getRowProps()}
+                    style={{
+                      backgroundColor: i % 2 === 0 ? "lightgrey" : "white",
+                    }}
+                  >
+                    {row.cells.map((cell, i) => (
+                      <td
+                        {...cell.getCellProps()}
+                        style={{
+                          ...cell.getCellProps().style,
+                          ...getCellStyle(i),
+                        }}
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    ))}
+                  </tr>
+                );
+                  
+                })}
+            ;
+          </tbody>
         </table>
         <div>
           <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-            {'<<'}
-          </button>{' '}
+            {"<<"}
+          </button>{" "}
           <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-            {'<'}
-          </button>{' '}
+            {"<"}
+          </button>{" "}
           <button onClick={() => nextPage()} disabled={!canNextPage}>
-            {'>'}
-          </button>{' '}
-          <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-            {'>>'}
-          </button>{' '}
+            {">"}
+          </button>{" "}
+          <button
+            onClick={() => gotoPage(pageCount - 1)}
+            disabled={!canNextPage}
+          >
+            {">>"}
+          </button>{" "}
           <span>
-            Sayfa{' '}
+            Sayfa{" "}
             <strong>
               {pageIndex + 1} / {pageOptions.length}
-            </strong>{' '}
+            </strong>{" "}
           </span>
           <span>
-            | Sayfaya git:{' '}
+            | Sayfaya git:{" "}
             <input
               type="number"
               defaultValue={pageIndex + 1}
-              onChange={e => {
+              onChange={(e) => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
                 gotoPage(page);
               }}
-              style={{ width: '100px' }}
+              style={{ width: "100px" }}
             />
-          </span>{' '}
+          </span>{" "}
         </div>
       </div>
     </div>

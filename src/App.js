@@ -7,14 +7,14 @@ function App() {
 
       <CustomTable
         apiLink="https://jsonplaceholder.typicode.com/posts"
-        columnWidths={['50px', '50px', '300px', '600px']}
+        columnWidths={['100px', '50px', '300px', '400px']}
         columnNames={['USERID', 'ID', 'TITLE', 'BODY']}
         textAlign={['center', 'center', 'left', 'center']}
-        padding={['15px', '15px', '5px', '25px']}
+        padding={['5px', '15px', '5px', '25px']}
         divHeight={'600px'}
-        divWidth={'1000px'}
+        divWidth={'1100px'}
         divPosition={'relative'}
-        gridRow={'5 / 6'} 
+        gridRow={'5 / 5'} 
         gridColumn={'4 / 9'}
       />
     </div>
